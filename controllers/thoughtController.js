@@ -4,7 +4,7 @@ const { Thought, User } = require('../models');
 const getThoughts = async (req, res) => {
   try {
     const thoughts = await Thought.find();
-    res.json(thoughts, "success!");
+    res.json(thoughts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -17,7 +17,7 @@ const getSingleThought = async (req, res) => {
     if (!thought) {
       return res.status(404).json({ message: 'Thought not found' });
     }
-    res.json(thought, "success!");
+    res.json(thought);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -34,7 +34,7 @@ const createThought = async (req, res) => {
     const savedThought = await newThought.save();
     // Push the created thought's _id to the associated user's thoughts array field
     await User.findByIdAndUpdate(userId, { $push: { thoughts: savedThought._id } });
-    res.status(201).json(savedThought, "success!");
+    res.status(201).json(savedThought);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -47,7 +47,7 @@ const updateThought = async (req, res) => {
     if (!updatedThought) {
       return res.status(404).json({ message: 'Thought not found' });
     }
-    res.json(updatedThought, "success!");
+    res.json(updatedThought);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -85,7 +85,7 @@ const getReactionsForThought = async (req, res) => {
 
     const reactions = await Promise.all(reactionPromises);
 
-    res.json(reactions, "success!");
+    res.json(reactions);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -112,7 +112,7 @@ const addReactionToThought = async (req, res) => {
     thought.reactions.push(newReaction);
     await thought.save();
 
-    res.json(thought.reactions, "success!");
+    res.json(thought.reactions);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

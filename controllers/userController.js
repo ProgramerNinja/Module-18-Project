@@ -15,7 +15,7 @@ const getSingleUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user, "success!");
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -28,7 +28,7 @@ const createUser = async (req, res) => {
   });
   try {
     const newUser = await user.save();
-    res.status(201).json(newUser, "success!");
+    res.status(201).json(newUser);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -40,7 +40,7 @@ const updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user, "success!");
+    res.json(user);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -66,7 +66,7 @@ const getThoughtsById = async (req, res) => {
     }
     const thoughtIds = user.thoughts; // Assuming user.thoughts contains an array of thought ids
     const thoughts = await Thought.find({ _id: { $in: thoughtIds } });
-    res.json(thoughts, "success!");
+    res.json(thoughts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -91,7 +91,7 @@ const getFriends = async (req, res) => {
 
     const friends = await Promise.all(friendPromises);
 
-    res.json(friends, "success!");
+    res.json(friends);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -113,7 +113,7 @@ const addFriend = async (req, res) => {
     user.friends.push(friend);
     await user.save();
 
-    res.json(user, "success!");
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -130,7 +130,7 @@ const removeFriend = async (req, res) => {
     user.friends = user.friends.filter(friend => friend.toString() !== friendId);
     await user.save();
 
-    res.json(user, "success!");
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
