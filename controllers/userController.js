@@ -1,62 +1,54 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
+const { User, Thought } = require('../models');
 
-// Route to get all users
-router.get('/users', async (req, res) => {
+const getUsers = async (req, res) => {
   try {
     const users = await User.find().populate('thoughts friends');
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-// Route to get a single user by its _id and populate thoughts and friends data
-router.get('/users/:id', async (req, res) => {
+const getSingleUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('thoughts friends');
+    const user = await User.findById(req.params.userId).populate('thoughts friends');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json(user, "success!");
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-// Route to create a new user
-router.post('/users', async (req, res) => {
+const createUser = async (req, res) => {
   const user = new User({
     username: req.body.username,
     email: req.body.email
   });
-
   try {
     const newUser = await user.save();
-    res.status(201).json(newUser);
+    res.status(201).json(newUser, "success!");
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
-});
+};
 
-// Route to update a user by its _id
-router.put('/users/:id', async (req, res) => {
+const updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json(user, "success!");
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
-});
+};
 
-// Route to delete a user by its _id
-router.delete('/users/:id', async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -64,37 +56,50 @@ router.delete('/users/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-// Route to get all thoughts of a user by user's _id
-router.get('/users/:id/thoughts', async (req, res) => {
+const getThoughtsById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('thoughts');
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user.thoughts);
+    const thoughtIds = user.thoughts; // Assuming user.thoughts contains an array of thought ids
+    const thoughts = await Thought.find({ _id: { $in: thoughtIds } });
+    res.json(thoughts, "success!");
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-// Route to get all friends of a user by user's _id
-router.get('/users/:id/friends', async (req, res) => {
+const getFriends = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('friends');
+    const user = await User.findById(req.params.userId).populate('friends', 'username');
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user.friends);
+
+    const friendIds = user.friends;
+    const friendPromises = friendIds.map(async (friendId) => {
+      const friendUser = await User.findById(friendId);
+      return {
+        userId: friendId,
+        username: friendUser ? friendUser.username : 'User not found'
+      };
+    });
+
+    const friends = await Promise.all(friendPromises);
+
+    res.json(friends, "success!");
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-router.post('/users/:id/friends', async (req, res) => {
+const addFriend = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -105,14 +110,40 @@ router.post('/users/:id/friends', async (req, res) => {
       return res.status(404).json({ message: 'Friend not found' });
     }
 
-    user.friends.push(friendId);
+    user.friends.push(friend);
     await user.save();
 
-    res.json(user);
+    res.json(user, "success!");
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-});
+};
 
+const removeFriend = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-module.exports = router;
+    const friendId = req.params.friendId;
+    user.friends = user.friends.filter(friend => friend.toString() !== friendId);
+    await user.save();
+
+    res.json(user, "success!");
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getUsers,
+  getSingleUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  getThoughtsById,
+  getFriends,
+  addFriend,
+  removeFriend
+};

@@ -1,22 +1,36 @@
-const express = require('express');
-const db = require('./config/connection');
 const routes = require('./routes');
+const express = require('express');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const bodyParser = require('body-parser');
 
-const cwd = process.cwd();
+// Load environment variables from .env file
+dotenv.config();
 
-const PORT = process.env.PORT || 3001;
+// Create an Express application
 const app = express();
 
-const project = cwd.includes('Social-Back-end')
-  ? cwd.split('Social-Back-end')[1]
-  : cwd;
+// Set up middleware
+app.use(bodyParser.json());
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// Connect to MongoDB using Mongoose
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+});
+
+// Check if the MongoDB connection is successful
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
+
+// Define routes
 app.use(routes);
 
-db.once('open', () => {
-  app.listen(PORT, () => {
-    console.log(`API server for ${project} running on port ${PORT}!`);
-  });
+
+// Start the Express server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

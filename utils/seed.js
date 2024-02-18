@@ -1,56 +1,73 @@
-const connection = require('../config/connection');
-const { Course, Student } = require('../models');
-const { getRandomName, getRandomAssignments } = require('./data');
+const mongoose = require('mongoose');
+const User = require('../models/User');
+const Thought = require('../models/Thoughts');
 
-connection.on('error', (err) => err);
-
-connection.once('open', async () => {
-  console.log('connected');
-    // Delete the collections if they exist
-    let courseCheck = await connection.db.listCollections({ name: 'courses' }).toArray();
-    if (courseCheck.length) {
-      await connection.dropCollection('courses');
-    }
-
-    let studentsCheck = await connection.db.listCollections({ name: 'students' }).toArray();
-    if (studentsCheck.length) {
-      await connection.dropCollection('students');
-    }
-
-
-  // Create empty array to hold the students
-  const students = [];
-
-  // Loop 20 times -- add students to the students array
-  for (let i = 0; i < 20; i++) {
-    // Get some random assignment objects using a helper function that we imported from ./data
-    const assignments = getRandomAssignments(20);
-
-    const fullName = getRandomName();
-    const first = fullName.split(' ')[0];
-    const last = fullName.split(' ')[1];
-    const github = `${first}${Math.floor(Math.random() * (99 - 18 + 1) + 18)}`;
-
-    students.push({
-      first,
-      last,
-      github,
-      assignments,
-    });
-  }
-
-  // Add students to the collection and await the results
-  const studentData = await Student.insertMany(students);
-
-  // Add courses to the collection and await the results
-  await Course.insertOne({
-    courseName: 'UCLA',
-    inPerson: false,
-    students: [...studentData.map(({_id}) => _id)],
-  });
-
-  // Log out the seed data to indicate what should appear in the database
-  console.table(students);
-  console.info('Seeding complete! 🌱');
-  process.exit(0);
+mongoose.connect('mongodb://127.0.0.1:27017/socialDB', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
+
+async function seedDatabase() {
+  try {
+    await User.deleteMany();
+    await Thought.deleteMany();
+
+  const usersData = [
+    {
+      username: 'Alice',
+      email: 'alice@example.com'
+    },
+    {
+      username: 'Bob',
+      email: 'bob@example.com'
+    },
+    {
+      username: 'Charlie',
+      email: 'charlie@example.com'
+    },
+    {
+      username: 'David',
+      email: 'david@example.com'
+    },
+    {
+      username: 'Eve',
+      email: 'eve@example.com'
+    }
+  ];
+
+  const thoughtsData = [
+    {
+      thoughtText: 'This is a sample thought by Alice',
+      username: 'Alice'
+    },
+    {
+      thoughtText: 'Another sample thought by Bob',
+      username: 'Bob'
+    },
+    {
+      thoughtText: 'A thought from Charlie',
+      username: 'Charlie'
+    },
+    {
+      thoughtText: 'Random thought by David',
+      username: 'David'
+    },
+    {
+      thoughtText: 'Deep thought by Eve',
+      username: 'Eve'
+    }
+  ];
+
+
+    const users = await User.insertMany(usersData);
+    const thoughts = await Thought.insertMany(thoughtsData);
+
+    console.log('Database seeded successfully!');
+  } catch (err) {
+    console.error('Error seeding database:', err);
+  } finally {
+    mongoose.disconnect();
+  }
+}
+
+seedDatabase();
